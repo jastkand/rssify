@@ -68,12 +68,21 @@ func GetPosts(feedId string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	var name, screenName string
 
-	sourceInfo := encoded.Response.Groups[0]
+	if len(encoded.Response.Groups) > 0 {
+		sourceInfo := encoded.Response.Groups[0]
+		name = sourceInfo.Name
+		screenName = sourceInfo.Screen_name
+	} else {
+		sourceInfo := encoded.Response.Profiles[0]
+		name = sourceInfo.First_name + " " + sourceInfo.Last_name
+		screenName = sourceInfo.Screen_name
+	}
 
 	feed := &feeds.Feed{
-		Title: sourceInfo.Name,
-		Link:  &feeds.Link{Href: "https://vk.com/" + sourceInfo.Screen_name},
+		Title: name,
+		Link:  &feeds.Link{Href: "https://vk.com/" + screenName},
 	}
 
 	for _, elem := range encoded.Response.Items {
