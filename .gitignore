@@ -24,3 +24,4 @@ _testmain.go
 test-results/
 tmp/
 routes/
+conf/app.conf

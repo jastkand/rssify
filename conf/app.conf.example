@@ -1,8 +1,8 @@
-app.name=rssify-
-app.secret=KOVgUyYhaTzGwIR3eXydGkedsAOCHxI2WumxSiT4qKTFvsPWrNZyNiD5C3lNco2z
-http.addr=
-http.port=3000
-http.ssl=false
+app.name=rssify
+app.secret = CHANGE_THIS_TO_SECRET_STRING
+http.addr =
+http.port = 3000
+http.ssl = false
 http.sslcert=
 http.sslkey=
 cookie.httponly=false
@@ -21,6 +21,9 @@ log.error.prefix = "ERROR "
 i18n.default_language=en
 
 module.static=github.com/revel/revel/modules/static
+
+vk.app_id = YOUR_APP_ID
+vk.app_secret = YOUR_APP_SECRET
 
 [dev]
 mode.dev=true
