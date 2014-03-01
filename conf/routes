@@ -5,6 +5,7 @@
 module:testrunner
 
 GET     /                                       App.Index
+GET     /feed/:feedId                           Feed.Show
 
 # Ignore favicon requests
 GET     /favicon.ico                            404
