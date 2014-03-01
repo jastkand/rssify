@@ -12,7 +12,7 @@ type Feed struct {
   *revel.Controller
 }
 
-type VKArray struct {
+type VKItem struct {
   Id int
   From_id int
   Owner_id int
@@ -21,9 +21,28 @@ type VKArray struct {
   Text string
 }
 
+type VKProfile struct {
+  Id int
+  First_name string
+  Last_name string
+  Screen_name string
+  Photo_200 string
+}
+
+type VKGRoup struct {
+  Id int
+  Name string
+  Screen_name string
+  Is_closed int
+  Type string
+  Photo_200 string
+}
+
 type VKResponseBody struct {
   Count int
-  Items []VKArray 
+  Items []VKItem
+  Profiles []VKProfile
+  Groups []VKGRoup
 }
 
 type VKResponse struct {
@@ -31,7 +50,7 @@ type VKResponse struct {
 }
 
 func (c Feed) Show(feedId string) revel.Result {
-  var requestUrl string = "https://api.vk.com/method/wall.get?count=2&v=5.12&owner_id=" + feedId
+  var requestUrl string = "https://api.vk.com/method/wall.get?count=2&v=5.12&extended=1&owner_id=" + feedId
 
   resp, err := http.Get(requestUrl)
 
