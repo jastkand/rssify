@@ -24,3 +24,5 @@ _testmain.go
 test-results/
 tmp/
 routes/
+bower_components
+node_modules
