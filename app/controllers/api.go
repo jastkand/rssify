@@ -11,15 +11,15 @@ type Api struct {
 }
 
 func (c Api) Show() revel.Result {
-	url.ParseRequestURI(c.Request.RequestURI)
+	u, err := url.ParseRequestURI(c.Request.RequestURI)
 
 	if err != nil {
 		panic(err)
 	}
 
-	q := url.Query()
+	q := u.Query()
 
-	posts, err := VK.getPostsByUrl(q.Get("g"))
+	posts, err := VK.GetPostsByUrl(q.Get("g"))
 
 	if err != nil {
 		panic(err)
