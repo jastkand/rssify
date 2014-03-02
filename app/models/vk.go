@@ -50,6 +50,7 @@ type VKResponse struct {
 
 func GetPosts(feedId string) (string, error) {
 	var requestUrl string = "https://api.vk.com/method/wall.get?v=5.12&extended=1&owner_id=" + feedId
+	var isGroup bool = strings.Contains(feedId, "-")
 
 	resp, err := http.Get(requestUrl)
 
@@ -70,7 +71,7 @@ func GetPosts(feedId string) (string, error) {
 	}
 	var name, screenName string
 
-	if len(encoded.Response.Groups) > 0 {
+	if isGroup {
 		sourceInfo := encoded.Response.Groups[0]
 		name = sourceInfo.Name
 		screenName = sourceInfo.Screen_name
