@@ -14,7 +14,7 @@ func (c Api) Show() revel.Result {
 	u, err := url.ParseRequestURI(c.Request.RequestURI)
 
 	if err != nil {
-		panic(err)
+
 	}
 
 	q := u.Query()
@@ -22,10 +22,8 @@ func (c Api) Show() revel.Result {
 	posts, err := VK.GetPostsByUrl(q.Get("g"))
 
 	if err != nil {
-		panic(err)
-	}
 
-	revel.INFO.Println(posts)
+	}
 
 	c.Response.ContentType = "text/xml"
 	return c.RenderText(posts)
