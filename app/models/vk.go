@@ -2,9 +2,11 @@ package VK
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/feeds"
 	"io/ioutil"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -89,6 +91,43 @@ func processAttachments(attachments []VKAttachment) string {
 	} else {
 		return ""
 	}
+}
+
+type ResolvedScreenName struct {
+	Type      string
+	Object_id string `json:",number"`
+	// Object_id int64
+}
+
+type ResolvedScreenNameResponse struct {
+	Response ResolvedScreenName
+}
+
+func resolveScreenName(screenName string) ResolvedScreenName {
+	var requestUrl = "https://api.vk.com/method/utils.resolveScreenName?v=5.12&screen_name=" + screenName
+	resp, err := http.Get(requestUrl)
+
+	if err != nil {
+		panic(err)
+	}
+
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+
+	if err != nil {
+		panic(err)
+	}
+
+	var encoded ResolvedScreenNameResponse
+
+	err = json.Unmarshal(body, &encoded)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return encoded.Response
 }
 
 type SourceInfo struct {
@@ -180,6 +219,12 @@ func GetPosts(feedId string) (string, error) {
 
 func GetPostsByUrl(feedUrl string) (string, error) {
 	var feedId string = "1"
+
+	rp := regexp.MustCompile("vk.com/(\\w+)")
+	result := rp.FindAllStringSubmatch(feedUrl, -1)
+	screenName := resolveScreenName(result[0][1])
+
+	fmt.Println(screenName)
 
 	return GetPosts(feedId)
 }
