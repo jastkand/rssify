@@ -177,3 +177,9 @@ func GetPosts(feedId string) (string, error) {
 
 	return feed.ToRss()
 }
+
+func GetPostsByUrl(feedUrl string) (string, error) {
+	var feedId string = "1"
+
+	return GetPosts(feedId)
+}
