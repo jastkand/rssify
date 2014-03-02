@@ -95,8 +95,7 @@ func processAttachments(attachments []VKAttachment) string {
 
 type ResolvedScreenName struct {
 	Type      string
-	Object_id string `json:",number"`
-	// Object_id int64
+	Object_id float64
 }
 
 type ResolvedScreenNameResponse struct {
@@ -179,6 +178,7 @@ func getSourceInfo(feedId string) (string, string) {
 func GetPosts(feedId string) (string, error) {
 	var requestUrl string = "https://api.vk.com/method/wall.get?v=5.12&extended=1&owner_id=" + feedId
 
+	fmt.Println(feedId)
 	resp, err := http.Get(requestUrl)
 
 	if err != nil {
@@ -218,13 +218,9 @@ func GetPosts(feedId string) (string, error) {
 }
 
 func GetPostsByUrl(feedUrl string) (string, error) {
-	var feedId string = "1"
-
 	rp := regexp.MustCompile("vk.com/(\\w+)")
 	result := rp.FindAllStringSubmatch(feedUrl, -1)
 	screenName := resolveScreenName(result[0][1])
 
-	fmt.Println(screenName)
-
-	return GetPosts(feedId)
+	return GetPosts(strconv.Itoa(int(screenName.Object_id)))
 }
