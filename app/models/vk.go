@@ -221,6 +221,13 @@ func GetPostsByUrl(feedUrl string) (string, error) {
 	rp := regexp.MustCompile("vk.com/(\\w+)")
 	result := rp.FindAllStringSubmatch(feedUrl, -1)
 	screenName := resolveScreenName(result[0][1])
+	var resolvedFeedId string
 
-	return GetPosts(strconv.Itoa(int(screenName.Object_id)))
+	if screenName.Type != "user" {
+		resolvedFeedId = "-" + strconv.Itoa(int(screenName.Object_id))
+	} else {
+		resolvedFeedId = strconv.Itoa(int(screenName.Object_id))
+	}
+
+	return GetPosts(resolvedFeedId)
 }
