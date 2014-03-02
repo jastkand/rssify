@@ -6,14 +6,14 @@ import (
 )
 
 type Feed struct {
-	*revel.Controller
+	App
 }
 
 func (c Feed) Show(feedId string) revel.Result {
 	rss, error := VK.GetPosts(feedId)
 
 	if error != nil {
-
+		// TODO: redirect to error
 	}
 
 	c.Response.ContentType = "text/xml"
