@@ -7,17 +7,31 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type VK struct{}
 
-type VKItem struct {
-	Id        int
-	From_id   int
+type VKPhoto struct {
+	Album_id  int
 	Owner_id  int
-	Date      int
-	Post_type string
-	Text      string
+	Photo_130 string
+	Photo_604 string
+}
+
+type VKAttachment struct {
+	Type  string
+	Photo VKPhoto
+}
+
+type VKItem struct {
+	Id          int
+	From_id     int
+	Owner_id    int
+	Date        int
+	Post_type   string
+	Text        string
+	Attachments []VKAttachment
 }
 
 type VKProfile struct {
@@ -91,6 +105,7 @@ func GetPosts(feedId string) (string, error) {
 			Title:       strings.Split(elem.Text, ".")[0] + "...",
 			Link:        &feeds.Link{Href: "http://vk.com/wall" + strconv.Itoa(elem.Owner_id) + "_" + strconv.Itoa(elem.Id)},
 			Description: elem.Text,
+			Created:     time.Unix(int64(elem.Date), int64(0)),
 		})
 	}
 
