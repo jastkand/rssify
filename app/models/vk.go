@@ -83,8 +83,8 @@ func processAttachments(attachments []VKAttachment) string {
 					photo = attachment.Photo.Photo_75
 				}
 			}
+			result += "<br/><img src='" + photo + "'/>"
 		}
-		result = "<br/><img src='" + photo + "'/>"
 		return result
 	} else {
 		return ""
