@@ -2,7 +2,6 @@ package VK
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/gorilla/feeds"
 	"io/ioutil"
 	"net/http"
@@ -30,13 +29,14 @@ type VKAttachment struct {
 }
 
 type VKItem struct {
-	Id          int
-	From_id     int
-	Owner_id    int
-	Date        int
-	Post_type   string
-	Text        string
-	Attachments []VKAttachment
+	Id           int
+	From_id      int
+	Owner_id     int
+	Date         int
+	Post_type    string
+	Text         string
+	Copy_history []VKItem
+	Attachments  []VKAttachment
 }
 
 type VKProfile struct {
@@ -165,7 +165,6 @@ func getSourceInfo(feedId string) (string, string) {
 
 	}
 	var encoded SourceInfoContainer
-
 	err = json.Unmarshal(body, &encoded)
 
 	if len(encoded.Response[0].Name) > 0 {
@@ -178,7 +177,6 @@ func getSourceInfo(feedId string) (string, string) {
 func GetPosts(feedId string) (string, error) {
 	var requestUrl string = "https://api.vk.com/method/wall.get?v=5.12&extended=1&owner_id=" + feedId
 
-	fmt.Println(feedId)
 	resp, err := http.Get(requestUrl)
 
 	if err != nil {
@@ -205,11 +203,20 @@ func GetPosts(feedId string) (string, error) {
 	}
 
 	for _, elem := range encoded.Response.Items {
+		var description string = ""
+		var screenName, name string = "", ""
 		photo := processAttachments(elem.Attachments)
+		description += elem.Text + photo
+
+		if len(elem.Copy_history) > 0 {
+			description += "<br/>repost<br/>" + elem.Copy_history[0].Text
+			name, screenName = getSourceInfo(strconv.Itoa(elem.Copy_history[0].Owner_id))
+		}
 		feed.Add(&feeds.Item{
+			Author:      &feeds.Author{Name: name, Email: "https://vk.com/" + screenName},
 			Title:       strings.Split(elem.Text, ".")[0] + "...",
 			Link:        &feeds.Link{Href: "http://vk.com/wall" + strconv.Itoa(elem.Owner_id) + "_" + strconv.Itoa(elem.Id)},
-			Description: elem.Text + photo,
+			Description: description,
 			Created:     time.Unix(int64(elem.Date), int64(0)),
 		})
 	}
