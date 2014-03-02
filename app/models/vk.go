@@ -209,7 +209,7 @@ func GetPosts(feedId string) (string, error) {
 		description += elem.Text + photo
 
 		if len(elem.Copy_history) > 0 {
-			description += "<br/>repost<br/>" + elem.Copy_history[0].Text
+			description += elem.Copy_history[0].Text + processAttachments(elem.Copy_history[0].Attachments)
 			name, screenName = getSourceInfo(strconv.Itoa(elem.Copy_history[0].Owner_id))
 		}
 		feed.Add(&feeds.Item{
