@@ -2,22 +2,40 @@ package VK
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/feeds"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type VK struct{}
 
+type VKPhoto struct {
+	Album_id   int
+	Owner_id   int
+	Photo_75   string
+	Photo_130  string
+	Photo_604  string
+	Photo_807  string
+	Photo_1280 string
+}
+
+type VKAttachment struct {
+	Type  string
+	Photo VKPhoto
+}
+
 type VKItem struct {
-	Id        int
-	From_id   int
-	Owner_id  int
-	Date      int
-	Post_type string
-	Text      string
+	Id          int
+	From_id     int
+	Owner_id    int
+	Date        int
+	Post_type   string
+	Text        string
+	Attachments []VKAttachment
 }
 
 type VKProfile struct {
@@ -48,8 +66,37 @@ type VKResponse struct {
 	Response VKResponseBody
 }
 
+func processAttachments(attachments []VKAttachment) string {
+	if len(attachments) > 0 {
+		var result, photo string = "", ""
+		for _, attachment := range attachments {
+			if attachment.Type == "photo" {
+
+				if attachment.Photo.Photo_1280 != "" {
+					photo = attachment.Photo.Photo_1280
+				} else if attachment.Photo.Photo_807 != "" {
+					photo = attachment.Photo.Photo_807
+				} else if attachment.Photo.Photo_604 != "" {
+					photo = attachment.Photo.Photo_604
+				} else if attachment.Photo.Photo_130 != "" {
+					photo = attachment.Photo.Photo_130
+				} else if attachment.Photo.Photo_75 != "" {
+					photo = attachment.Photo.Photo_75
+				}
+
+				fmt.Println(photo)
+			}
+		}
+		result = "<br/><img src='" + photo + "'/>"
+		return result
+	} else {
+		return ""
+	}
+}
+
 func GetPosts(feedId string) (string, error) {
 	var requestUrl string = "https://api.vk.com/method/wall.get?v=5.12&extended=1&owner_id=" + feedId
+	var isGroup bool = strings.Contains(feedId, "-")
 
 	resp, err := http.Get(requestUrl)
 
@@ -70,7 +117,7 @@ func GetPosts(feedId string) (string, error) {
 	}
 	var name, screenName string
 
-	if len(encoded.Response.Groups) > 0 {
+	if isGroup {
 		sourceInfo := encoded.Response.Groups[0]
 		name = sourceInfo.Name
 		screenName = sourceInfo.Screen_name
@@ -86,10 +133,12 @@ func GetPosts(feedId string) (string, error) {
 	}
 
 	for _, elem := range encoded.Response.Items {
+		photo := processAttachments(elem.Attachments)
 		feed.Add(&feeds.Item{
 			Title:       strings.Split(elem.Text, ".")[0] + "...",
 			Link:        &feeds.Link{Href: "http://vk.com/wall" + strconv.Itoa(elem.Owner_id) + "_" + strconv.Itoa(elem.Id)},
-			Description: elem.Text,
+			Description: elem.Text + photo,
+			Created:     time.Unix(int64(elem.Date), int64(0)),
 		})
 	}
 
