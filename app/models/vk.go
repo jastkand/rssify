@@ -107,7 +107,7 @@ func resolveScreenName(screenName string) ResolvedScreenName {
 	resp, err := http.Get(requestUrl)
 
 	if err != nil {
-		panic(err)
+
 	}
 
 	defer resp.Body.Close()
@@ -115,7 +115,7 @@ func resolveScreenName(screenName string) ResolvedScreenName {
 	body, err := ioutil.ReadAll(resp.Body)
 
 	if err != nil {
-		panic(err)
+
 	}
 
 	var encoded ResolvedScreenNameResponse
@@ -123,7 +123,7 @@ func resolveScreenName(screenName string) ResolvedScreenName {
 	err = json.Unmarshal(body, &encoded)
 
 	if err != nil {
-		panic(err)
+
 	}
 
 	return encoded.Response
