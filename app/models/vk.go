@@ -2,7 +2,6 @@ package VK
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/gorilla/feeds"
 	"io/ioutil"
 	"net/http"
@@ -83,8 +82,6 @@ func processAttachments(attachments []VKAttachment) string {
 				} else if attachment.Photo.Photo_75 != "" {
 					photo = attachment.Photo.Photo_75
 				}
-
-				fmt.Println(photo)
 			}
 		}
 		result = "<br/><img src='" + photo + "'/>"
@@ -94,9 +91,54 @@ func processAttachments(attachments []VKAttachment) string {
 	}
 }
 
+type SourceInfo struct {
+	Name        string
+	Screen_name string
+	First_name  string
+	Last_name   string
+}
+
+type SourceInfoContainer struct {
+	Response []SourceInfo
+}
+
+func getSourceInfo(feedId string) (string, string) {
+	var isGroup bool = strings.Contains(feedId, "-")
+	var groupUrl string = "https://api.vk.com/method/groups.getById?group_id="
+	var profileUrl string = "https://api.vk.com/method/users.get?user_ids="
+	var requestUrl string
+
+	if isGroup {
+		feedId = feedId[1:]
+		requestUrl = groupUrl + feedId
+	} else {
+		requestUrl = profileUrl + feedId
+	}
+
+	resp, err := http.Get(requestUrl)
+
+	if err != nil {
+
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+
+	if err != nil {
+
+	}
+	var encoded SourceInfoContainer
+
+	err = json.Unmarshal(body, &encoded)
+
+	if len(encoded.Response[0].Name) > 0 {
+		return encoded.Response[0].Name, encoded.Response[0].Screen_name
+	} else {
+		return encoded.Response[0].First_name + " " + encoded.Response[0].Last_name, feedId
+	}
+}
+
 func GetPosts(feedId string) (string, error) {
 	var requestUrl string = "https://api.vk.com/method/wall.get?v=5.12&extended=1&owner_id=" + feedId
-	var isGroup bool = strings.Contains(feedId, "-")
 
 	resp, err := http.Get(requestUrl)
 
@@ -115,17 +157,8 @@ func GetPosts(feedId string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	var name, screenName string
 
-	if isGroup {
-		sourceInfo := encoded.Response.Groups[0]
-		name = sourceInfo.Name
-		screenName = sourceInfo.Screen_name
-	} else {
-		sourceInfo := encoded.Response.Profiles[0]
-		name = sourceInfo.First_name + " " + sourceInfo.Last_name
-		screenName = sourceInfo.Screen_name
-	}
+	name, screenName := getSourceInfo(feedId)
 
 	feed := &feeds.Feed{
 		Title: name,
