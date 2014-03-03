@@ -1,0 +1,85 @@
+#! /bin/bash
+# Go/Revel server init script - Thibaut Colar.
+
+### BEGIN INIT INFO
+# Provides:       app_name
+# Required-Start: $network
+# Required-Stop:
+# Default-Start:  2 3 4 5
+# Default-Stop:   0 1 6
+# Short-Description: app_name
+### END INIT INFO
+
+USER="your_user" # User we wil run Go as
+GOPATH="/home/your_user/go" # GOPATH
+GOROOT="/usr/local/go" # used by revel
+GO_CMD="revel run app_name prod" # here I use revel but could just use "go"
+WORKDIR="/home/your_user/src/app_name"
+NAME="app_name" # app name for ogs etc ...
+
+###### Start script ########################################################
+
+recursiveKill() { # Recursively kill a process and all subprocesses
+    CPIDS=$(pgrep -P $1);
+    for PID in $CPIDS
+    do
+        recursiveKill $PID
+    done
+    sleep 3 && kill -9 $1 2>/dev/null & # hard kill after 3 seconds
+    kill $1 2>/dev/null # try soft kill first
+}
+
+case "$1" in
+      start)
+        echo "Starting $NAME ..."
+        if [ -f "$WORKDIR/$NAME.pid" ]
+        then
+            echo "Already running according to $WORKDIR/$NAME.pid"
+            exit 1
+        fi
+        cd "$WORKDIR"
+  export GOROOT="$GOROOT"
+  export GOPATH="$GOPATH"
+  export PATH="${PATH}:${GOROOT}/bin:${GOPATH}/bin"
+        /bin/su -m -l $USER -c "$GO_CMD" > "$WORKDIR/$NAME.log" 2>&1 &
+        PID=$!
+        echo $PID > "$WORKDIR/$NAME.pid"
+        echo "Started with pid $PID - Logging to $WORKDIR/$NAME.log" && exit 0
+        ;;
+      stop)
+        echo "Stopping $NAME ..."
+        if [ ! -f "$WORKDIR/$NAME.pid" ]
+        then
+            echo "Already stopped!"
+            exit 1
+        fi
+        PID=`cat "$WORKDIR/$NAME.pid"`
+        recursiveKill $PID
+        rm -f "$WORKDIR/$NAME.pid"
+        echo "stopped $NAME" && exit 0
+        ;;
+      restart)
+        $0 stop
+        sleep 1
+        $0 start
+        ;;
+      status)
+        if [ -f "$WORKDIR/$NAME.pid" ]
+        then
+            PID=`cat "$WORKDIR/$NAME.pid"`
+            if [ "$(/bin/ps --no-headers -p $PID)" ]
+            then
+                echo "$NAME is running (pid : $PID)" && exit 0
+            else
+                echo "Pid $PID found in $WORKDIR/$NAME.pid, but not running." && exit 1
+            fi
+        else
+            echo "$NAME is NOT running" && exit 1
+        fi
+    ;;
+      *)
+      echo "Usage: /etc/init.d/$NAME {start|stop|restart|status}" && exit 1
+      ;;
+esac
+
+exit 0
