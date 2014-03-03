@@ -5,7 +5,7 @@
 module:testrunner
 
 GET     /                                       App.Index
-GET     /feed/:feedId                           Feed.Show
+# GET     /feed/:feedId                           Feed.Show
 GET     /api/v1/rss                             Api.Show
 
 # Ignore favicon requests
