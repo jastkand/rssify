@@ -25,6 +25,8 @@ module.static=github.com/revel/revel/modules/static
 vk.app_id = YOUR_APP_ID
 vk.app_secret = YOUR_APP_SECRET
 
+analytics.account_id =
+
 [dev]
 mode.dev=true
 results.pretty=true
