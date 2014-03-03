@@ -19,7 +19,8 @@ func (c Api) Show() revel.Result {
 
 	q := u.Query()
 
-	posts, err := VK.GetPostsByUrl(q.Get("g"))
+	vk := &services.VKFeed{q.Get("g")}
+	posts, err := vk.GetFeed()
 
 	if err != nil {
 

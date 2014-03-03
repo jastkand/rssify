@@ -1,4 +1,4 @@
-package VK
+package models
 
 import (
 	"encoding/json"
@@ -11,7 +11,9 @@ import (
 	"time"
 )
 
-type VK struct{}
+type VKFeed struct {
+	FeedUrl string
+}
 
 type VKPhoto struct {
 	Album_id   int
@@ -65,6 +67,17 @@ type VKResponseBody struct {
 
 type VKResponse struct {
 	Response VKResponseBody
+}
+
+type SourceInfo struct {
+	Name        string
+	Screen_name string
+	First_name  string
+	Last_name   string
+}
+
+type SourceInfoContainer struct {
+	Response []SourceInfo
 }
 
 func processAttachments(attachments []VKAttachment) string {
@@ -129,17 +142,6 @@ func resolveScreenName(screenName string) ResolvedScreenName {
 	return encoded.Response
 }
 
-type SourceInfo struct {
-	Name        string
-	Screen_name string
-	First_name  string
-	Last_name   string
-}
-
-type SourceInfoContainer struct {
-	Response []SourceInfo
-}
-
 func getSourceInfo(feedId string) (string, string) {
 	var isGroup bool = strings.Contains(feedId, "-")
 	var groupUrl string = "https://api.vk.com/method/groups.getById?group_id="
@@ -174,8 +176,8 @@ func getSourceInfo(feedId string) (string, string) {
 	}
 }
 
-func GetPosts(feedId string) (string, error) {
-	var requestUrl string = "https://api.vk.com/method/wall.get?v=5.12&extended=1&owner_id=" + feedId
+func getPosts(feedUrl string) (string, error) {
+	var requestUrl string = "https://api.vk.com/method/wall.get?v=5.12&extended=1&owner_id=" + feedUrl
 
 	resp, err := http.Get(requestUrl)
 
@@ -195,7 +197,7 @@ func GetPosts(feedId string) (string, error) {
 		return "", err
 	}
 
-	name, screenName := getSourceInfo(feedId)
+	name, screenName := getSourceInfo(feedUrl)
 
 	feed := &feeds.Feed{
 		Title: name,
@@ -224,7 +226,7 @@ func GetPosts(feedId string) (string, error) {
 	return feed.ToRss()
 }
 
-func GetPostsByUrl(feedUrl string) (string, error) {
+func getPostsByUrl(feedUrl string) (string, error) {
 	rp := regexp.MustCompile("vk.com/(\\w+)")
 	result := rp.FindAllStringSubmatch(feedUrl, -1)
 	screenName := resolveScreenName(result[0][1])
@@ -236,5 +238,9 @@ func GetPostsByUrl(feedUrl string) (string, error) {
 		resolvedFeedId = strconv.Itoa(int(screenName.Object_id))
 	}
 
-	return GetPosts(resolvedFeedId)
+	return getPosts(resolvedFeedId)
+}
+
+func (v VKFeed) GetFeed() (string, error) {
+	return getPostsByUrl(v.FeedUrl)
 }
