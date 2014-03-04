@@ -1,6 +1,6 @@
   {{if eq .RunMode "dev"}}
     {{template "debug.html" .}}
   {{end}}
-  {{gascript}}
+  {{if .GoogleAnalytics}}{{template "ga.html" .GoogleAnalytics}}{{end}}
   </body>
 </html>
