@@ -121,7 +121,7 @@ func processAttachments(attachmants []VKAttachment) VKAttachmentList {
 					photo = attachment.Photo.Photo_75
 				}
 
-				attachmentList.Items = append(attachmentList.Items, &VKAttachmentListItem{photo, "image/jpeg"})
+				attachmentList.Items = append(attachmentList.Items, &VKAttachmentListItem{photo, "photo"})
 			}
 
 			if attachment.Type == "audio" {
@@ -234,8 +234,10 @@ func getPosts(feedUrl string) (string, error) {
 	for _, elem := range encoded.Response.Items {
 		var description string = ""
 		var screenName, name string = "", ""
+		var photos string = ""
 
 		attachmentList := processAttachments(elem.Attachments)
+
 		description += elem.Text
 
 		if len(elem.Copy_history) > 0 {
@@ -244,18 +246,25 @@ func getPosts(feedUrl string) (string, error) {
 			name, screenName = getSourceInfo(strconv.Itoa(elem.Copy_history[0].Owner_id))
 		}
 
+		for _, attachment := range attachmentList.Items {
+			if attachment.Type == "photo" {
+				photos += "<br/><img src='" + attachment.Url + "'/>"
+			}
+		}
+
 		item := &feeds.Item{
 			Author:      &feeds.Author{Name: name, Email: "https://vk.com/" + screenName},
 			Title:       strings.Split(elem.Text, ".")[0] + "...",
 			Link:        &feeds.Link{Href: "http://vk.com/wall" + strconv.Itoa(elem.Owner_id) + "_" + strconv.Itoa(elem.Id)},
-			Description: description,
+			Description: description + photos,
 			Created:     time.Unix(int64(elem.Date), int64(0)),
 		}
 
 		for _, attachment := range attachmentList.Items {
-			enclosure := &feeds.Enclosure{attachment.Url, attachment.Type}
-
-			item.AddEnclosure(enclosure)
+			if attachment.Type == "audio/mpeg" {
+				enclosure := &feeds.Enclosure{attachment.Url, attachment.Type}
+				item.AddEnclosure(enclosure)
+			}
 		}
 
 		feed.Add(item)
