@@ -2,7 +2,7 @@ package models
 
 import (
 	"encoding/json"
-	"github.com/gorilla/feeds"
+	"github.com/fugazister/feeds"
 	"io/ioutil"
 	"net/http"
 	"regexp"
@@ -15,6 +15,11 @@ type VKFeed struct {
 	FeedUrl string
 }
 
+type VKVideo struct {
+	Id   int
+	Link string
+}
+
 type VKPhoto struct {
 	Album_id   int
 	Owner_id   int
@@ -25,9 +30,16 @@ type VKPhoto struct {
 	Photo_1280 string
 }
 
+type VKAudio struct {
+	Id  int
+	Url string
+}
+
 type VKAttachment struct {
 	Type  string
 	Photo VKPhoto
+	Audio VKAudio
+	Video VKVideo
 }
 
 type VKItem struct {
@@ -80,11 +92,22 @@ type SourceInfoContainer struct {
 	Response []SourceInfo
 }
 
-func processAttachments(attachments []VKAttachment) string {
-	if len(attachments) > 0 {
-		var result, photo string = "", ""
-		for _, attachment := range attachments {
+type VKAttachmentListItem struct {
+	Url  string
+	Type string
+}
+
+type VKAttachmentList struct {
+	Items []*VKAttachmentListItem
+}
+
+func processAttachments(attachmants []VKAttachment) VKAttachmentList {
+	var attachmentList VKAttachmentList
+
+	if len(attachmants) > 0 {
+		for _, attachment := range attachmants {
 			if attachment.Type == "photo" {
+				var photo string = ""
 
 				if attachment.Photo.Photo_1280 != "" {
 					photo = attachment.Photo.Photo_1280
@@ -97,13 +120,17 @@ func processAttachments(attachments []VKAttachment) string {
 				} else if attachment.Photo.Photo_75 != "" {
 					photo = attachment.Photo.Photo_75
 				}
+
+				attachmentList.Items = append(attachmentList.Items, &VKAttachmentListItem{photo, "image/jpeg"})
 			}
-			result += "<br/><img src='" + photo + "'/>"
+
+			if attachment.Type == "audio" {
+				attachmentList.Items = append(attachmentList.Items, &VKAttachmentListItem{attachment.Audio.Url, "audio/mpeg"})
+			}
 		}
-		return result
-	} else {
-		return ""
 	}
+
+	return attachmentList
 }
 
 type ResolvedScreenName struct {
@@ -207,20 +234,31 @@ func getPosts(feedUrl string) (string, error) {
 	for _, elem := range encoded.Response.Items {
 		var description string = ""
 		var screenName, name string = "", ""
-		photo := processAttachments(elem.Attachments)
-		description += elem.Text + photo
+
+		attachmentList := processAttachments(elem.Attachments)
+		description += elem.Text
 
 		if len(elem.Copy_history) > 0 {
-			description += elem.Copy_history[0].Text + processAttachments(elem.Copy_history[0].Attachments)
+			description += elem.Copy_history[0].Text
+			attachmentList = processAttachments(elem.Copy_history[0].Attachments)
 			name, screenName = getSourceInfo(strconv.Itoa(elem.Copy_history[0].Owner_id))
 		}
-		feed.Add(&feeds.Item{
+
+		item := &feeds.Item{
 			Author:      &feeds.Author{Name: name, Email: "https://vk.com/" + screenName},
 			Title:       strings.Split(elem.Text, ".")[0] + "...",
 			Link:        &feeds.Link{Href: "http://vk.com/wall" + strconv.Itoa(elem.Owner_id) + "_" + strconv.Itoa(elem.Id)},
 			Description: description,
 			Created:     time.Unix(int64(elem.Date), int64(0)),
-		})
+		}
+
+		for _, attachment := range attachmentList.Items {
+			enclosure := &feeds.Enclosure{attachment.Url, attachment.Type}
+
+			item.AddEnclosure(enclosure)
+		}
+
+		feed.Add(item)
 	}
 
 	return feed.ToRss()
