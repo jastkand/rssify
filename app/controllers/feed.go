@@ -16,6 +16,6 @@ package controllers
 // 		// TODO: redirect to error
 // 	}
 
-// 	c.Response.ContentType = "text/xml"
+// 	c.Response.ContentType = "application/xml"
 // 	return c.RenderText(rss)
 // }
