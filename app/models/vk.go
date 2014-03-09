@@ -125,7 +125,7 @@ func processAttachments(attachmants []VKAttachment) VKAttachmentList {
 			}
 
 			if attachment.Type == "audio" {
-				attachmentList.Items = append(attachmentList.Items, &VKAttachmentListItem{attachment.Audio.Url, "audio/mpeg"})
+				attachmentList.Items = append(attachmentList.Items, &VKAttachmentListItem{attachment.Audio.Url, "audio"})
 			}
 		}
 	}
@@ -234,7 +234,7 @@ func getPosts(feedUrl string) (string, error) {
 	for _, elem := range encoded.Response.Items {
 		var description string = ""
 		var screenName, name string = "", ""
-		var photos string = ""
+		var attachments string = ""
 
 		attachmentList := processAttachments(elem.Attachments)
 
@@ -248,7 +248,9 @@ func getPosts(feedUrl string) (string, error) {
 
 		for _, attachment := range attachmentList.Items {
 			if attachment.Type == "photo" {
-				photos += "<br/><img src='" + attachment.Url + "'/>"
+				attachments += "<br/><img src='" + attachment.Url + "'/>"
+			} else if attachment.Type == "audio" {
+				attachments += "<br/><source src='" + attachment.Url + "' type='audio/mpeg; codecs='mp3' />"
 			}
 		}
 
@@ -256,16 +258,16 @@ func getPosts(feedUrl string) (string, error) {
 			Author:      &feeds.Author{Name: name, Email: "https://vk.com/" + screenName},
 			Title:       strings.Split(elem.Text, ".")[0] + "...",
 			Link:        &feeds.Link{Href: "http://vk.com/wall" + strconv.Itoa(elem.Owner_id) + "_" + strconv.Itoa(elem.Id)},
-			Description: description + photos,
+			Description: description + attachments,
 			Created:     time.Unix(int64(elem.Date), int64(0)),
 		}
 
-		for _, attachment := range attachmentList.Items {
-			if attachment.Type == "audio/mpeg" {
-				enclosure := &feeds.Enclosure{attachment.Url, attachment.Type}
-				item.AddEnclosure(enclosure)
-			}
-		}
+		/*		for _, attachment := range attachmentList.Items {
+				if attachment.Type == "audio/mpeg" {
+					enclosure := &feeds.Enclosure{attachment.Url, attachment.Type}
+					item.AddEnclosure(enclosure)
+				}
+			}*/
 
 		feed.Add(item)
 	}
