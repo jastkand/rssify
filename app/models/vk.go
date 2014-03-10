@@ -252,7 +252,7 @@ func getPosts(feedUrl string) (string, error) {
 			}
 		}
 
-		attachments = audio
+		attachments = image
 
 		if len(audio) > 0 {
 			attachments += "<audio controls='controls' class='audioTrack' preload='none'>" + audio + "</audio>"
