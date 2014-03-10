@@ -232,9 +232,7 @@ func getPosts(feedUrl string) (string, error) {
 	}
 
 	for _, elem := range encoded.Response.Items {
-		var description string = ""
-		var screenName, name string = "", ""
-		var attachments string = ""
+		var description, screenName, name, attachments, audio, image string
 
 		attachmentList := processAttachments(elem.Attachments)
 
@@ -248,10 +246,16 @@ func getPosts(feedUrl string) (string, error) {
 
 		for _, attachment := range attachmentList.Items {
 			if attachment.Type == "photo" {
-				attachments += "<br/><img src='" + attachment.Url + "'/>"
+				image += "<br/><img src='" + attachment.Url + "'/>"
 			} else if attachment.Type == "audio" {
-				attachments += "<br/><source src='" + attachment.Url + "' type='audio/mpeg; codecs='mp3' />"
+				audio += "<br/><source src='" + attachment.Url + "' type='audio/mpeg; codecs='mp3' />"
 			}
+		}
+
+		attachments = audio
+
+		if len(audio) > 0 {
+			attachments += "<audio controls='controls' class='audioTrack' preload='none'>" + audio + "</audio>"
 		}
 
 		item := &feeds.Item{
@@ -261,13 +265,6 @@ func getPosts(feedUrl string) (string, error) {
 			Description: description + attachments,
 			Created:     time.Unix(int64(elem.Date), int64(0)),
 		}
-
-		/*		for _, attachment := range attachmentList.Items {
-				if attachment.Type == "audio/mpeg" {
-					enclosure := &feeds.Enclosure{attachment.Url, attachment.Type}
-					item.AddEnclosure(enclosure)
-				}
-			}*/
 
 		feed.Add(item)
 	}
